@@ -1,0 +1,53 @@
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+.scene{
+	colorRanger:rgb(12,99,46);
+	colorRangerLight:rgb(84,235,140);
+	-fx-focus-color:rgb(12,99,46);
+}
+
+.menu:hover{
+	-fx-background-color: rgb(12,99,46)
+}
+
+.menu:focused{
+	-fx-background-color: rgb(12,99,46)
+}
+
+.menu:showing{
+	-fx-background-color: rgb(12,99,46)
+}
+
+.combo-box:focused{
+	-fx-border-color: rgb(12,99,46)
+}
+
+.menu-item:focused {
+     -fx-background-color: rgb(12,99,46)
+}
+
+.table-row-cell:focused{
+	 -fx-background-color: rgb(12,99,46);
+	 -fx-color: white;
+}
+
+.table-row-cell:selected{
+	 -fx-background-color: rgb(12,99,46);
+	 -fx-color: white;
+}
+
+
+.table-row-cell:hover{
+	 -fx-background-color: rgb(35,235,107)
+}
+
+.table-view{
+	-fx-focus-color:rgb(12,99,46)
+}
+
+.combo-box .list-cell:hover{
+	-fx-background-color: rgb(35,235,107);
+}
+
+.combo-box .list-cell:focused{
+	-fx-background-color: rgb(12,99,46);
+}
