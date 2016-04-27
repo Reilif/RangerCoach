@@ -15,6 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
@@ -35,6 +36,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Callback;
@@ -444,15 +447,58 @@ public class MainFrameController {
     	
     	Canvas canvas = new Canvas( 115*5, 65*5);
     	GraphicsContext gc = canvas.getGraphicsContext2D();
-    	gc.setFill(Color.GREEN);
-        gc.setStroke(Color.BLUE);
-        gc.setLineWidth(5);
-        gc.strokeLine(40, 10, 10, 40);
     	
-    	gc.beginPath();
-    	gc.moveTo(canvas.getWidth()/2, 0);
-    	gc.lineTo(canvas.getWidth()/2, canvas.getHeight());
-    	gc.closePath();
+    	double heightStep = canvas.getHeight()/14;
+    	
+    	gc.setFill(Color.RED);
+    	gc.setStroke(Color.BLACK);
+    	gc.fillRect(0, 0, canvas.getWidth(), heightStep);
+    	
+    	gc.fillRect(0, heightStep, heightStep, heightStep);
+    	gc.fillRect(canvas.getWidth()-heightStep, heightStep, heightStep, heightStep);
+    	gc.fillRect((canvas.getWidth()-heightStep)/2, heightStep, heightStep, heightStep);
+    	
+    	gc.fillRect(0, canvas.getHeight() - heightStep, canvas.getWidth(), heightStep);
+    	
+    	gc.fillRect(0, 7*heightStep, heightStep, heightStep);
+    	gc.fillRect(canvas.getWidth()-heightStep, 7*heightStep, heightStep, heightStep);
+    	gc.fillRect((canvas.getWidth()-heightStep)/2, 7*heightStep, heightStep, heightStep);
+    	gc.setTextAlign(TextAlignment.CENTER);
+    	gc.setTextBaseline(VPos.CENTER);
+    	gc.setFont(Font.font(heightStep*0.8));
+    	
+    	gc.setFill(Color.BLACK);
+    	gc.fillText("Kopf", canvas.getWidth()/4, 1.5*heightStep, (canvas.getWidth() - 3 * heightStep)/2);
+    	gc.fillText("Arm", 3*canvas.getWidth()/4, 1.5*heightStep, (canvas.getWidth() - 3 * heightStep)/2);
+    	gc.fillText("Brust", canvas.getWidth()/4, 7.5*heightStep, (canvas.getWidth() - 3 * heightStep)/2);
+    	gc.fillText("Bein", 3*canvas.getWidth()/4, 7.5*heightStep, (canvas.getWidth() - 3 * heightStep)/2);
+    	
+    	for (int i = 1; i < 6; i++) {
+    		gc.fillText(String.valueOf(i), heightStep/2, (1.5+i)*heightStep);
+		}
+    	
+    	for (int i = 1; i < 6; i++) {
+    		gc.fillText(String.valueOf(i), canvas.getWidth()/2, (1.5+i)*heightStep);
+		}
+    	
+    	for (int i = 1; i < 6; i++) {
+    		gc.fillText(String.valueOf(i), heightStep/2, (7.5+i)*heightStep);
+		}
+    	
+    	for (int i = 1; i < 6; i++) {
+    		gc.fillText(String.valueOf(i), canvas.getWidth()/2, (7.5+i)*heightStep);
+		}
+    	
+    	for (int i = 2; i < 23; i++) {
+    		gc.strokeLine(0, (i)*heightStep, canvas.getWidth(), (i)*heightStep);
+		}
+    	
+    	gc.strokeLine(heightStep, heightStep, heightStep, canvas.getHeight()-heightStep);
+    	gc.setFill(Color.WHITE);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(2);
+        gc.strokeRect(1, 1, canvas.getWidth()-2, canvas.getHeight()-2);
+        
     	
     	Dialog<Spielzug> dialog = new Dialog<>();
 		dialog.setTitle("Wristcoach exportieren");
