@@ -66,7 +66,7 @@
             </Menu>
 				<Menu mnemonicParsing="false" text="Wristcoach">
 					<items>
-						<MenuItem mnemonicParsing="false" text="Exportieren..." />
+						<MenuItem mnemonicParsing="false" onAction="#exportWristcoach" text="Exportieren..." />
 					</items>
 				</Menu>
 			</menus>

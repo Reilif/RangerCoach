@@ -17,6 +17,8 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
@@ -32,6 +34,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Callback;
@@ -39,13 +42,13 @@ import javafx.util.Callback;
 public class MainFrameController {
 
 	@FXML
-	Parent root;
-
-	@FXML
-	TableColumn<Spielzug, String> clLineup;
+	ComboBox<Gameplan> cbGameplan;
 
 	@FXML
 	TableColumn<Spielzug, String> clBlock;
+
+	@FXML
+	TableColumn<Spielzug, String> clLineup;
 
 	@FXML
 	TableColumn<Spielzug, String> clRoutes;
@@ -53,15 +56,15 @@ public class MainFrameController {
 	@FXML
 	TableColumn<Spielzug, String> clType;
 
+	private FilePersistentManager persistentManager;
+
 	@FXML
-	ComboBox<Gameplan> cbGameplan;
+	Parent root;
+
+	private String sep;
 
 	@FXML
 	TableView<Spielzug> tablePlays;
-
-	private FilePersistentManager persistentManager;
-
-	private String sep;
 
 	public MainFrameController() {
 		persistentManager = new FilePersistentManager();
@@ -82,221 +85,18 @@ public class MainFrameController {
 	}
 
 	@FXML
-	void loadFile(ActionEvent event) {
-		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle("Coach Datei laden");
-		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Coach Dateien (.rcf)", "*.rcf"));
-		File selectedFile = fileChooser.showOpenDialog(root.getScene().getWindow());
-		if (selectedFile != null) {
-			persistentManager.setFile(selectedFile);
-			persistentManager.loadPlays();
-		}
-	}
+    void addPlayToGameplan(ActionEvent event) {
+		
+    	
+    	Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
 
-	@FXML
-	void saveFile(ActionEvent event) {
-		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle("Coach Datei speichern");
-		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Coach Dateien (.rcf)", "*.rcf"));
-		File selectedFile = fileChooser.showSaveDialog(root.getScene().getWindow());
-		if (selectedFile != null) {
-			persistentManager.setFile(selectedFile);
-			persistentManager.savePlays();
-		}
-	}
-
-	@FXML
-	void saveFileShort(ActionEvent event) {
-		persistentManager.savePlays();
-	}
-	
-	@FXML
-	void removePlay(ActionEvent event) {
-		Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
-		Alert alert = new Alert(AlertType.CONFIRMATION);
-		alert.setTitle("Bestätigung");
-		alert.setHeaderText("Spielzug löschen");
-		alert.setContentText("Willst du den Spielzug " + spielzug.toString() + " wirklich löschen?");
-
-		Optional<ButtonType> showAndWait = alert.showAndWait();
-		if (showAndWait.get() == ButtonType.OK) {
-			persistentManager.removeSpielzug(spielzug);
-			loadGameplan();
-		}
-	}
-
-	@FXML
-	void removePlan(ActionEvent event) {
-		Gameplan gameplan = cbGameplan.getSelectionModel().getSelectedItem();
-		if (gameplan.getId() < 0) {
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setTitle("Hinweis");
-			alert.setHeaderText(null);
-			alert.setContentText("System Gameplans lassen sich nicht löschen.");
-
-			alert.showAndWait();
+    	if(spielzug == null){
 			return;
 		}
-
-		Alert alert = new Alert(AlertType.CONFIRMATION);
-		alert.setTitle("Bestätigung");
-		alert.setHeaderText("Gameplan löschen");
-		alert.setContentText("Willst du den Gameplan " + gameplan.toString() + " wirklich löschen?");
-
-		Optional<ButtonType> showAndWait = alert.showAndWait();
-		if (showAndWait.get() == ButtonType.OK) {
-			persistentManager.removeGameplan(gameplan);
-		}
-	}
-	
-	@FXML
-	void editPlay(ActionEvent event) {
-		
-		Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
-
-		if(spielzug == null){
-			return;
-		}
-		
-		Dialog<Spielzug> dialog = new Dialog<>();
-		dialog.setTitle("Spielzug bearbeiten");
-		dialog.setHeaderText("Spielzug");
-
-		// Set the button types.
-		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
-
-		// Create the username and password labels and fields.
-		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
-		grid.setPadding(new Insets(20, 150, 10, 10));
-
-		TextField tfLineup = new TextField();
-		tfLineup.setText(spielzug.getAufstellung());
-
-		TextField tfRoutes = new TextField();
-		tfRoutes.setText(spielzug.getRoutes());
-
-		TextField tfBlock = new TextField();
-		tfBlock.setText(spielzug.getBlockSchema());;
-		
-		TextField tfType = new TextField();
-		tfType.setText(spielzug.getType());
-
-		grid.add(new Label("Aufstellung:"), 0, 0);
-		grid.add(tfLineup, 1, 0);
-		grid.add(new Label("Routen:"), 0, 1);
-		grid.add(tfRoutes, 1, 1);
-		grid.add(new Label("Blockschema:"), 0, 2);
-		grid.add(tfBlock, 1, 2);
-		grid.add(new Label("Type:"), 0, 3);
-		grid.add(tfType, 1, 3);
-
-		dialog.getDialogPane().setContent(grid);
-
-		// Request focus on the username field by default.
-		Platform.runLater(() -> tfLineup.requestFocus());
-
-		// Convert the result to a username-password-pair when the login button
-		// is clicked.
-		dialog.setResultConverter(dialogButton -> {
-			if (dialogButton == loginButtonType) {
-				
-				
-				spielzug.setAufstellung(tfLineup.getText());
-				spielzug.setBlockSchema(tfBlock.getText());
-				spielzug.setRoutes(tfRoutes.getText());
-				spielzug.setType(tfType.getText());
-
-				return spielzug;
-			}
-			return null;
-		});
-
-		Optional<Spielzug> result = dialog.showAndWait();
-		result.ifPresent(play -> {
-			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
-			loadGameplan();
-		});
-	}
-
-	@FXML
-	void newPlay(ActionEvent event) {
-
-
-
-		System.out.println("Neuer Spielzug");
-		Dialog<Spielzug> dialog = new Dialog<>();
-		dialog.setTitle("Neuer Spielzug");
-		dialog.setHeaderText("Spielzug");
-
-		// Set the button types.
-		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
-
-		// Create the username and password labels and fields.
-		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
-		grid.setPadding(new Insets(20, 150, 10, 10));
-
-		TextField tfLineup = new TextField();
-		tfLineup.setPromptText("Aufstellung");
-
-		TextField tfRoutes = new TextField();
-		tfRoutes.setPromptText("Routen");
-
-		TextField tfBlock = new TextField();
-		tfBlock.setPromptText("Blockschema");
-		
-		TextField tfType = new TextField();
-		tfType.setPromptText("Type");
-
-		grid.add(new Label("Aufstellung:"), 0, 0);
-		grid.add(tfLineup, 1, 0);
-		grid.add(new Label("Routen:"), 0, 1);
-		grid.add(tfRoutes, 1, 1);
-		grid.add(new Label("Blockschema:"), 0, 2);
-		grid.add(tfBlock, 1, 2);
-		grid.add(new Label("Type:"), 0, 3);
-		grid.add(tfType, 1, 3);
-
-		dialog.getDialogPane().setContent(grid);
-
-		// Request focus on the username field by default.
-		Platform.runLater(() -> tfLineup.requestFocus());
-
-		// Convert the result to a username-password-pair when the login button
-		// is clicked.
-		dialog.setResultConverter(dialogButton -> {
-			if (dialogButton == loginButtonType) {
-				
-				Spielzug newSpielzug = persistentManager.getNewSpielzug();
-				newSpielzug.setAufstellung(tfLineup.getText());
-				newSpielzug.setBlockSchema(tfBlock.getText());
-				newSpielzug.setRoutes(tfRoutes.getText());
-				newSpielzug.setType(tfType.getText());
-
-				return newSpielzug;
-			}
-			return null;
-		});
-
-		Optional<Spielzug> result = dialog.showAndWait();
-
-		result.ifPresent(play -> {
-			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
-			loadGameplan();
-		});
-	}
-
-	@FXML
-	void newPlan(ActionEvent event) {
 
 		Dialog<Gameplan> dialog = new Dialog<>();
-		dialog.setTitle("Neuer Gameplan");
-		dialog.setHeaderText("Gameplan anlegen");
+		dialog.setTitle("Gameplan bearbeiten");
+		dialog.setHeaderText("Spielzug zum Gameplan hinzufügen");
 
 		// Set the button types.
 		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
@@ -308,35 +108,54 @@ public class MainFrameController {
 		grid.setVgap(10);
 		grid.setPadding(new Insets(20, 150, 10, 10));
 
-		TextField tfName = new TextField();
-		tfName.setPromptText("Name");
-
-		grid.add(new Label("Name:"), 0, 0);
-		grid.add(tfName, 1, 0);
+		ComboBox<Gameplan> cbGameplan = new ComboBox<>();
+		cbGameplan.setCellFactory(new Callback<ListView<Gameplan>, ListCell<Gameplan>>() {
+		     @Override public ListCell<Gameplan> call(ListView<Gameplan> p) {
+		         return new ListCell<Gameplan>() {
+		             
+		             @Override protected void updateItem(Gameplan item, boolean empty) {
+		                 super.updateItem(item, empty);
+		                 
+		                 if (item == null || empty) {
+		                     setGraphic(null);
+		                 } else {
+		                    setText(item.getName() + "("+item.size()+"/"+item.MAX_PLAYS+")");
+		                 }
+		            }
+		       };
+		   }
+		});
+		
+		
+		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
+		for (Gameplan gameplan2 : allGameplans) {
+			if(gameplan2.getId() >=0){
+				if(gameplan2.size() < gameplan2.MAX_PLAYS){
+					cbGameplan.getItems().add(gameplan2);
+				}
+			}
+		}
+		
+		grid.add(new Label("Gameplan:"), 0, 0);
+		grid.add(cbGameplan, 1, 0);
 
 		// Enable/Disable login button depending on whether a username was
 		// entered.
-		Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
-		loginButton.setDisable(true);
-
-		// Do some validation (using the Java 8 lambda syntax).
-		tfName.textProperty().addListener((observable, oldValue, newValue) -> {
-			loginButton.setDisable(newValue.trim().isEmpty());
-		});
-
 		dialog.getDialogPane().setContent(grid);
 
 		// Request focus on the username field by default.
-		Platform.runLater(() -> tfName.requestFocus());
+		Platform.runLater(() -> cbGameplan.requestFocus());
 
 		// Convert the result to a username-password-pair when the login button
 		// is clicked.
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == loginButtonType) {
-				Gameplan newGameplan = persistentManager.getNewGameplan();
-				newGameplan.setName(tfName.getText());
+				Gameplan value = cbGameplan.getValue();
+				if(value != null){
+					value.add(spielzug);
+				}
 
-				return newGameplan;
+				return value;
 			}
 			return null;
 		});
@@ -345,9 +164,45 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
-			loadGameplans();
+			loadGameplan();
 		});
 	}
+
+	@FXML
+    void checkGameplan(ActionEvent event) {
+		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
+
+		if(selectedItem == null || selectedItem.getId() < 0){
+			if(event.getSource() instanceof Node){
+				Node node = (Node) event.getSource();
+				node.setDisable(true);
+			}
+		}else{
+			if(event.getSource() instanceof Node){
+				Node node = (Node) event.getSource();
+				node.setDisable(false);
+			}
+
+		}
+    }
+
+	@FXML
+    void checkNoGameplan(ActionEvent event) {
+    	Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
+    	
+		if(selectedItem == null || selectedItem.getId() < 0){
+			if(event.getSource() instanceof Node){
+				Node node = (Node) event.getSource();
+				node.setDisable(false);
+			}
+		}else{
+			if(event.getSource() instanceof Node){
+				Node node = (Node) event.getSource();
+				node.setDisable(true);
+			}
+
+		}
+    }
 	
 	@FXML
 	void copyPlan(ActionEvent event) {
@@ -444,7 +299,7 @@ public class MainFrameController {
 			loadGameplan(play);
 		});
 	}
-	
+
 	@FXML
 	void editPlan(ActionEvent event) {
 		
@@ -506,8 +361,114 @@ public class MainFrameController {
 			loadGameplans();
 		});
 	}
+	
+	@FXML
+	void editPlay(ActionEvent event) {
+		
+		Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
+
+		if(spielzug == null){
+			return;
+		}
+		
+		Dialog<Spielzug> dialog = new Dialog<>();
+		dialog.setTitle("Spielzug bearbeiten");
+		dialog.setHeaderText("Spielzug");
+
+		// Set the button types.
+		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
+		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+		// Create the username and password labels and fields.
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(20, 150, 10, 10));
+
+		TextField tfLineup = new TextField();
+		tfLineup.setText(spielzug.getAufstellung());
+
+		TextField tfRoutes = new TextField();
+		tfRoutes.setText(spielzug.getRoutes());
+
+		TextField tfBlock = new TextField();
+		tfBlock.setText(spielzug.getBlockSchema());;
+		
+		TextField tfType = new TextField();
+		tfType.setText(spielzug.getType());
+
+		grid.add(new Label("Aufstellung:"), 0, 0);
+		grid.add(tfLineup, 1, 0);
+		grid.add(new Label("Routen:"), 0, 1);
+		grid.add(tfRoutes, 1, 1);
+		grid.add(new Label("Blockschema:"), 0, 2);
+		grid.add(tfBlock, 1, 2);
+		grid.add(new Label("Type:"), 0, 3);
+		grid.add(tfType, 1, 3);
+
+		dialog.getDialogPane().setContent(grid);
+
+		// Request focus on the username field by default.
+		Platform.runLater(() -> tfLineup.requestFocus());
+
+		// Convert the result to a username-password-pair when the login button
+		// is clicked.
+		dialog.setResultConverter(dialogButton -> {
+			if (dialogButton == loginButtonType) {
+				
+				
+				spielzug.setAufstellung(tfLineup.getText());
+				spielzug.setBlockSchema(tfBlock.getText());
+				spielzug.setRoutes(tfRoutes.getText());
+				spielzug.setType(tfType.getText());
+
+				return spielzug;
+			}
+			return null;
+		});
+
+		Optional<Spielzug> result = dialog.showAndWait();
+		result.ifPresent(play -> {
+			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
+			loadGameplan();
+		});
+	}
 
 
+    @FXML
+    void exportWristcoach(ActionEvent event) {
+    	Gameplan value = cbGameplan.getValue();
+    	if(value == null || value.getId() < 0){
+    		return;
+    	}
+    	
+    	Canvas canvas = new Canvas( 115*5, 65*5);
+    	GraphicsContext gc = canvas.getGraphicsContext2D();
+    	gc.setFill(Color.GREEN);
+        gc.setStroke(Color.BLUE);
+        gc.setLineWidth(5);
+        gc.strokeLine(40, 10, 10, 40);
+    	
+    	gc.beginPath();
+    	gc.moveTo(canvas.getWidth()/2, 0);
+    	gc.lineTo(canvas.getWidth()/2, canvas.getHeight());
+    	gc.closePath();
+    	
+    	Dialog<Spielzug> dialog = new Dialog<>();
+		dialog.setTitle("Wristcoach exportieren");
+		dialog.setHeaderText("Wristcoach");
+
+		// Set the button types.
+		ButtonType loginButtonType = new ButtonType("Exportieren", ButtonData.OK_DONE);
+		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+		dialog.getDialogPane().setContent(canvas);
+
+
+		dialog.showAndWait();
+    	
+    }
+	
 	@FXML
 	public void initialize() {
 
@@ -560,29 +521,57 @@ public class MainFrameController {
 		tablePlays.setPlaceholder(imageView);
 	}
 
+	@FXML
+	void loadFile(ActionEvent event) {
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Coach Datei laden");
+		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Coach Dateien (.rcf)", "*.rcf"));
+		File selectedFile = fileChooser.showOpenDialog(root.getScene().getWindow());
+		if (selectedFile != null) {
+			persistentManager.setFile(selectedFile);
+			persistentManager.loadPlays();
+		}
+	}
+	
+	protected void loadGameplan() {
+		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
+
+		if(selectedItem != null){
+			loadGameplan(selectedItem);
+		}else{
+			tablePlays.getItems().clear();
+		}
+	}
+	
+	@FXML
+	void loadGameplan(ActionEvent event) {
+		loadGameplan();
+	}
+
+
+	protected void loadGameplan(Gameplan plan) {
+		if (plan.getId() < 0) {
+			tablePlays.getItems().clear();
+			tablePlays.getItems().addAll(persistentManager.getAllPlays().values());
+		} else {
+			tablePlays.getItems().clear();
+			if(!plan.isEmpty()){
+				tablePlays.getItems().addAll(plan);
+			}
+		}
+	}
+
 	protected void loadGameplans() {
 		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
 		cbGameplan.setItems(allGameplans);
 	}
 
 	@FXML
-	void loadGameplan(ActionEvent event) {
-		loadGameplan();
-	}
-	
-    @FXML
-    void addPlayToGameplan(ActionEvent event) {
-		
-    	
-    	Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
-
-    	if(spielzug == null){
-			return;
-		}
+	void newPlan(ActionEvent event) {
 
 		Dialog<Gameplan> dialog = new Dialog<>();
-		dialog.setTitle("Gameplan bearbeiten");
-		dialog.setHeaderText("Spielzug zum Gameplan hinzufügen");
+		dialog.setTitle("Neuer Gameplan");
+		dialog.setHeaderText("Gameplan anlegen");
 
 		// Set the button types.
 		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
@@ -594,54 +583,35 @@ public class MainFrameController {
 		grid.setVgap(10);
 		grid.setPadding(new Insets(20, 150, 10, 10));
 
-		ComboBox<Gameplan> cbGameplan = new ComboBox<>();
-		cbGameplan.setCellFactory(new Callback<ListView<Gameplan>, ListCell<Gameplan>>() {
-		     @Override public ListCell<Gameplan> call(ListView<Gameplan> p) {
-		         return new ListCell<Gameplan>() {
-		             
-		             @Override protected void updateItem(Gameplan item, boolean empty) {
-		                 super.updateItem(item, empty);
-		                 
-		                 if (item == null || empty) {
-		                     setGraphic(null);
-		                 } else {
-		                    setText(item.getName() + "("+item.size()+"/"+item.MAX_PLAYS+")");
-		                 }
-		            }
-		       };
-		   }
-		});
-		
-		
-		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
-		for (Gameplan gameplan2 : allGameplans) {
-			if(gameplan2.getId() >=0){
-				if(gameplan2.size() < gameplan2.MAX_PLAYS){
-					cbGameplan.getItems().add(gameplan2);
-				}
-			}
-		}
-		
-		grid.add(new Label("Gameplan:"), 0, 0);
-		grid.add(cbGameplan, 1, 0);
+		TextField tfName = new TextField();
+		tfName.setPromptText("Name");
+
+		grid.add(new Label("Name:"), 0, 0);
+		grid.add(tfName, 1, 0);
 
 		// Enable/Disable login button depending on whether a username was
 		// entered.
+		Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
+		loginButton.setDisable(true);
+
+		// Do some validation (using the Java 8 lambda syntax).
+		tfName.textProperty().addListener((observable, oldValue, newValue) -> {
+			loginButton.setDisable(newValue.trim().isEmpty());
+		});
+
 		dialog.getDialogPane().setContent(grid);
 
 		// Request focus on the username field by default.
-		Platform.runLater(() -> cbGameplan.requestFocus());
+		Platform.runLater(() -> tfName.requestFocus());
 
 		// Convert the result to a username-password-pair when the login button
 		// is clicked.
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == loginButtonType) {
-				Gameplan value = cbGameplan.getValue();
-				if(value != null){
-					value.add(spielzug);
-				}
+				Gameplan newGameplan = persistentManager.getNewGameplan();
+				newGameplan.setName(tfName.getText());
 
-				return value;
+				return newGameplan;
 			}
 			return null;
 		});
@@ -650,10 +620,119 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
+			loadGameplans();
+		});
+	}
+	
+    @FXML
+	void newPlay(ActionEvent event) {
+
+
+
+		System.out.println("Neuer Spielzug");
+		Dialog<Spielzug> dialog = new Dialog<>();
+		dialog.setTitle("Neuer Spielzug");
+		dialog.setHeaderText("Spielzug");
+
+		// Set the button types.
+		ButtonType loginButtonType = new ButtonType("Speichern", ButtonData.OK_DONE);
+		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+		// Create the username and password labels and fields.
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(20, 150, 10, 10));
+
+		TextField tfLineup = new TextField();
+		tfLineup.setPromptText("Aufstellung");
+
+		TextField tfRoutes = new TextField();
+		tfRoutes.setPromptText("Routen");
+
+		TextField tfBlock = new TextField();
+		tfBlock.setPromptText("Blockschema");
+		
+		TextField tfType = new TextField();
+		tfType.setPromptText("Type");
+
+		grid.add(new Label("Aufstellung:"), 0, 0);
+		grid.add(tfLineup, 1, 0);
+		grid.add(new Label("Routen:"), 0, 1);
+		grid.add(tfRoutes, 1, 1);
+		grid.add(new Label("Blockschema:"), 0, 2);
+		grid.add(tfBlock, 1, 2);
+		grid.add(new Label("Type:"), 0, 3);
+		grid.add(tfType, 1, 3);
+
+		dialog.getDialogPane().setContent(grid);
+
+		// Request focus on the username field by default.
+		Platform.runLater(() -> tfLineup.requestFocus());
+
+		// Convert the result to a username-password-pair when the login button
+		// is clicked.
+		dialog.setResultConverter(dialogButton -> {
+			if (dialogButton == loginButtonType) {
+				
+				Spielzug newSpielzug = persistentManager.getNewSpielzug();
+				newSpielzug.setAufstellung(tfLineup.getText());
+				newSpielzug.setBlockSchema(tfBlock.getText());
+				newSpielzug.setRoutes(tfRoutes.getText());
+				newSpielzug.setType(tfType.getText());
+
+				return newSpielzug;
+			}
+			return null;
+		});
+
+		Optional<Spielzug> result = dialog.showAndWait();
+
+		result.ifPresent(play -> {
+			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
 			loadGameplan();
 		});
 	}
     
+    @FXML
+	void removePlan(ActionEvent event) {
+		Gameplan gameplan = cbGameplan.getSelectionModel().getSelectedItem();
+		if (gameplan.getId() < 0) {
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setTitle("Hinweis");
+			alert.setHeaderText(null);
+			alert.setContentText("System Gameplans lassen sich nicht löschen.");
+
+			alert.showAndWait();
+			return;
+		}
+
+		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.setTitle("Bestätigung");
+		alert.setHeaderText("Gameplan löschen");
+		alert.setContentText("Willst du den Gameplan " + gameplan.toString() + " wirklich löschen?");
+
+		Optional<ButtonType> showAndWait = alert.showAndWait();
+		if (showAndWait.get() == ButtonType.OK) {
+			persistentManager.removeGameplan(gameplan);
+		}
+	}
+
+    @FXML
+	void removePlay(ActionEvent event) {
+		Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
+		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.setTitle("Bestätigung");
+		alert.setHeaderText("Spielzug löschen");
+		alert.setContentText("Willst du den Spielzug " + spielzug.toString() + " wirklich löschen?");
+
+		Optional<ButtonType> showAndWait = alert.showAndWait();
+		if (showAndWait.get() == ButtonType.OK) {
+			persistentManager.removeSpielzug(spielzug);
+			loadGameplan();
+		}
+	}
+
     @FXML
     void removePlayFromGameplan(ActionEvent event) {
     	Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
@@ -676,64 +755,22 @@ public class MainFrameController {
 
     }
 
-    @FXML
-    void checkGameplan(ActionEvent event) {
-		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-
-		if(selectedItem == null || selectedItem.getId() < 0){
-			if(event.getSource() instanceof Node){
-				Node node = (Node) event.getSource();
-				node.setDisable(true);
-			}
-		}else{
-			if(event.getSource() instanceof Node){
-				Node node = (Node) event.getSource();
-				node.setDisable(false);
-			}
-
-		}
-    }
-
-    @FXML
-    void checkNoGameplan(ActionEvent event) {
-    	Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-    	
-		if(selectedItem == null || selectedItem.getId() < 0){
-			if(event.getSource() instanceof Node){
-				Node node = (Node) event.getSource();
-				node.setDisable(false);
-			}
-		}else{
-			if(event.getSource() instanceof Node){
-				Node node = (Node) event.getSource();
-				node.setDisable(true);
-			}
-
-		}
-    }
-
 	
-	protected void loadGameplan() {
-		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-
-		if(selectedItem != null){
-			loadGameplan(selectedItem);
-		}else{
-			tablePlays.getItems().clear();
+	@FXML
+	void saveFile(ActionEvent event) {
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Coach Datei speichern");
+		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Coach Dateien (.rcf)", "*.rcf"));
+		File selectedFile = fileChooser.showSaveDialog(root.getScene().getWindow());
+		if (selectedFile != null) {
+			persistentManager.setFile(selectedFile);
+			persistentManager.savePlays();
 		}
 	}
 	
-	protected void loadGameplan(Gameplan plan) {
-		
-		if (plan.getId() < 0) {
-			tablePlays.getItems().clear();
-			tablePlays.getItems().addAll(persistentManager.getAllPlays().values());
-		} else {
-			tablePlays.getItems().clear();
-			if(!plan.isEmpty()){
-				tablePlays.getItems().addAll(plan);
-			}
-		}
+	@FXML
+	void saveFileShort(ActionEvent event) {
+		persistentManager.savePlays();
 	}
 
 }
