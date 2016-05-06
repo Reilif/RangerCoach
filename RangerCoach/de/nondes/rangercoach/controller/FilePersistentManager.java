@@ -122,7 +122,9 @@ public class FilePersistentManager implements PersistentManager {
 			if(jsonID.getValueType() == ValueType.NUMBER){
 				int id = ((JsonNumber) jsonID).intValue();
 				Spielzug spielzug = plays.get(id);
-				gameplan.add(spielzug);
+				if(spielzug!=null){
+					gameplan.add(spielzug);
+				}
 			}
 		}
 		return gameplan;
