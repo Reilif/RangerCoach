@@ -148,7 +148,6 @@ public class MainFrameController {
 		gc.setStroke(Color.BLACK);
 
 		Spieler[] player = play.getPlayer();
-		System.out.println(player.length);
 		for (Spieler spieler : player) {
 			paintPlayer(gc, spieler);
 		}
@@ -880,13 +879,14 @@ public class MainFrameController {
 
 		double heightStep = canvas.getHeight() / 20;
 
-		gc.setFill(Color.GREEN);
+		gc.setFill(Color.RED);
+		
 		gc.setStroke(Color.BLACK);
 		gc.fillRect(0, 0, heightStep*2, canvas.getHeight()/2);
 		gc.fillRect(canvas.getWidth()/2, 0, heightStep*2, canvas.getHeight()/2);
 
 
-		gc.setFill(Color.RED);
+		gc.setFill(Color.GREEN);
 		gc.setStroke(Color.BLACK);
 		gc.fillRect(0, canvas.getHeight()/2, heightStep*2, canvas.getHeight()/2);
 		gc.fillRect(canvas.getWidth()/2, canvas.getHeight()/2, 
@@ -913,12 +913,18 @@ public class MainFrameController {
 			int j = i%5==0?5:i%5;
 			gc.fillText(String.valueOf(j), 2.5* heightStep,(i-0.5 )* heightStep);
 		}
+		
+		for (int i = 1; i < 21; i++) {
+			int j = i%5==0?5:i%5;
+			gc.fillText(String.valueOf(j), 2.5* heightStep + canvas.getWidth()/2,(i-0.5 )* heightStep);
+		}
+
 
 		for (int i = 0; i < 21; i++) {
 			if (i == 5 || i == 10 || i == 15) {
 				gc.setLineWidth(2);
 			} else {
-				gc.setLineWidth(1);
+				gc.setLineWidth(0.5);
 			}
 			gc.strokeLine(0, (i) * heightStep, canvas.getWidth(), (i) * heightStep);
 		}
@@ -926,11 +932,10 @@ public class MainFrameController {
 		gc.setLineWidth(2);
 		gc.strokeLine(2* heightStep, 0, 2*heightStep,
 				canvas.getHeight());
-		gc.strokeLine((canvas.getWidth() - heightStep) / 2, heightStep, (canvas.getWidth() - heightStep) / 2,
-				canvas.getHeight() - heightStep);
-		gc.strokeLine(canvas.getWidth() - heightStep, heightStep, canvas.getWidth() - heightStep,
-				canvas.getHeight() - heightStep);
-		gc.strokeLine(heightStep, heightStep, heightStep, canvas.getHeight() - heightStep);
+		gc.strokeLine(canvas.getWidth() / 2, 0, canvas.getWidth() / 2 ,
+				canvas.getHeight());
+		gc.strokeLine(canvas.getWidth() / 2 + 2*heightStep, 0, canvas.getWidth() / 2 + 2*heightStep,
+				canvas.getHeight());
 
 		gc.setFill(Color.WHITE);
 		gc.setStroke(Color.BLACK);
@@ -938,41 +943,64 @@ public class MainFrameController {
 		gc.strokeRect(1, 1, canvas.getWidth() - 2, canvas.getHeight() - 2);
 
 		gc.setFill(Color.BLACK);
-		gc.setFont(Font.font(heightStep * 0.6));
+		gc.setFont(Font.font(heightStep * 0.8));
+		
+		gc.setTextAlign(TextAlignment.LEFT);
 		int i = 0;
 		for (Spielzug spielzug : value) {
+			String text = !b?spielzug.getAufstellung() + " " + spielzug.getRoutes():spielzug.getBlockSchema();
 			switch (i) {
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+				gc.fillText(text, 3*heightStep,
+						(0.5 + i) * heightStep);
+				break;
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+			case 18:
+			case 19:
+				gc.fillText(text, 3*heightStep + canvas.getWidth()/2,
+						(0.5 + i-10) * heightStep);
+				break;
 			case 20:
 			case 21:
 			case 22:
 			case 23:
 			case 24:
-				gc.fillText(spielzug.getAufstellung() + " " + spielzug.getRoutes(), canvas.getWidth() / 4,
-						(2.5 + i - 20) * heightStep, (canvas.getWidth() - 3 * heightStep) / 2);
-				break;
 			case 25:
 			case 26:
 			case 27:
 			case 28:
 			case 29:
-				gc.fillText(spielzug.getAufstellung() + " " + spielzug.getRoutes(), canvas.getWidth() / 4,
-						(3.5 + i - 20) * heightStep, (canvas.getWidth() - 3 * heightStep) / 2);
+				gc.fillText(text, 3*heightStep,
+						(0.5 + i - 10) * heightStep);
 				break;
 			case 30:
 			case 31:
 			case 32:
 			case 33:
 			case 34:
-				gc.fillText(spielzug.getAufstellung() + " " + spielzug.getRoutes(), 3 * canvas.getWidth() / 4,
-						(2.5 - 30 + i) * heightStep, (canvas.getWidth() - 3 * heightStep) / 2);
-				break;
 			case 35:
 			case 36:
 			case 37:
 			case 38:
 			case 39:
-				gc.fillText(spielzug.getAufstellung() + " " + spielzug.getRoutes(), 3 * canvas.getWidth() / 4,
-						(3.5 - 30 + i) * heightStep, (canvas.getWidth() - 3 * heightStep) / 2);
+				gc.fillText(text, 3*heightStep + canvas.getWidth()/2,
+						(0.5 + i-20) * heightStep);
 				break;
 
 			default:
