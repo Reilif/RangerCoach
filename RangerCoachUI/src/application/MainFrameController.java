@@ -47,6 +47,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -54,6 +56,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -70,13 +74,64 @@ import javafx.util.Callback;
 
 public class MainFrameController {
 
+	private final class TabGameplan extends Tab {
+		private final Gameplan gameplan;
+		private TableView<Spielzug> tableView;
+
+		private TabGameplan(Gameplan gameplan) {
+			super(gameplan.getName());
+			this.gameplan = gameplan;
+			
+			BorderPane borderPane = new BorderPane();
+			setContent(borderPane);
+			
+			tableView = new TableView<>();
+			borderPane.setCenter(tableView);
+			
+			tableView.getItems().addAll(gameplan);
+			
+			gameplan.addListener(new ChangeListener<Gameplan>() {
+
+				@Override
+				public void changed(ObservableValue<? extends Gameplan> observable, Gameplan oldValue,
+						Gameplan newValue) {
+					tableView.getItems().clear();
+					tableView.getItems().addAll(gameplan);
+				}
+			});
+			
+			TableColumn<Spielzug, String> clLineup = new TableColumn<>("Aufstellung");
+			TableColumn<Spielzug, String> clBlock = new TableColumn<>("Block");
+			TableColumn<Spielzug, String> clRoutes = new TableColumn<>("Pass-/Laufrouten");
+			TableColumn<Spielzug, String> clType = new TableColumn<>("Type");
+			
+			
+			tableView.getColumns().add(clLineup);
+			tableView.getColumns().add(clRoutes);
+			tableView.getColumns().add(clBlock);
+			tableView.getColumns().add(clType);
+			
+			tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+			
+			
+		}
+
+		public Gameplan getGameplan() {
+			return gameplan;
+		}
+
+		public Spielzug getSpielzug() {
+			return tableView.getSelectionModel().getSelectedItem();
+		}
+	}
+
 	private static final int PLAYER_HEIGHT = 15;
 
 	private static final int PLAYER_WIDTH = 30;
 
-	@FXML
-	ComboBox<Gameplan> cbGameplan;
-
+    @FXML
+    private TabPane tabs;
+	
 	@FXML
 	TableColumn<Spielzug, String> clBlock;
 
@@ -112,7 +167,6 @@ public class MainFrameController {
 			try {
 				defaultFile.createNewFile();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -267,45 +321,9 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
-			loadGameplan();
 		});
 	}
 
-	@FXML
-	void checkGameplan(ActionEvent event) {
-		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-
-		if (selectedItem == null || selectedItem.getId() < 0) {
-			if (event.getSource() instanceof Node) {
-				Node node = (Node) event.getSource();
-				node.setDisable(true);
-			}
-		} else {
-			if (event.getSource() instanceof Node) {
-				Node node = (Node) event.getSource();
-				node.setDisable(false);
-			}
-
-		}
-	}
-
-	@FXML
-	void checkNoGameplan(ActionEvent event) {
-		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-
-		if (selectedItem == null || selectedItem.getId() < 0) {
-			if (event.getSource() instanceof Node) {
-				Node node = (Node) event.getSource();
-				node.setDisable(false);
-			}
-		} else {
-			if (event.getSource() instanceof Node) {
-				Node node = (Node) event.getSource();
-				node.setDisable(true);
-			}
-
-		}
-	}
 
 	@FXML
 	void copyPlan(ActionEvent event) {
@@ -328,25 +346,7 @@ public class MainFrameController {
 		tfName.setPromptText("Name");
 
 		ComboBox<Gameplan> cbGameplan = new ComboBox<>();
-		cbGameplan.setCellFactory(new Callback<ListView<Gameplan>, ListCell<Gameplan>>() {
-			@Override
-			public ListCell<Gameplan> call(ListView<Gameplan> p) {
-				return new ListCell<Gameplan>() {
-
-					@Override
-					protected void updateItem(Gameplan item, boolean empty) {
-						super.updateItem(item, empty);
-
-						if (item == null || empty) {
-							setGraphic(null);
-						} else {
-							setText(item.getName() + "(" + item.size() + "/" + item.MAX_PLAYS + ")");
-						}
-					}
-				};
-			}
-		});
-
+		
 		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
 		for (Gameplan gameplan2 : allGameplans) {
 			if (gameplan2.getId() >= 0) {
@@ -397,7 +397,6 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
-			loadGameplans();
 			loadGameplan(play);
 		});
 	}
@@ -405,7 +404,12 @@ public class MainFrameController {
 	@FXML
 	void editPlan(ActionEvent event) {
 
-		Gameplan gameplan = cbGameplan.getSelectionModel().getSelectedItem();
+		Tab tab = tabs.getSelectionModel().getSelectedItem();
+		if(!(tab instanceof TabGameplan)){
+			
+		}
+		TabGameplan tabGameplan = (TabGameplan) tab;
+		Gameplan gameplan = tabGameplan.getGameplan();
 		if (gameplan == null || gameplan.getId() < 0) {
 			return;
 		}
@@ -460,7 +464,6 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
-			loadGameplans();
 		});
 	}
 
@@ -531,13 +534,18 @@ public class MainFrameController {
 		Optional<Spielzug> result = dialog.showAndWait();
 		result.ifPresent(play -> {
 			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
-			loadGameplan();
 		});
 	}
 
 	@FXML
 	void exportWristcoach(ActionEvent event) {
-		Gameplan value = cbGameplan.getValue();
+		Tab tab = tabs.getSelectionModel().getSelectedItem();
+		if(!(tab instanceof TabGameplan)){
+			
+		}
+		TabGameplan tabGameplan = (TabGameplan) tab;
+		Gameplan value = tabGameplan.getGameplan();
+		
 		if (value == null || value.getId() < 0) {
 			return;
 		}
@@ -1020,39 +1028,7 @@ public class MainFrameController {
 		clRoutes.setCellValueFactory(new PropertyValueFactory<Spielzug, String>("routes"));
 		clType.setCellValueFactory(new PropertyValueFactory<Spielzug, String>("type"));
 
-		cbGameplan.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Gameplan>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Gameplan> observable, Gameplan oldValue, Gameplan newValue) {
-				loadGameplan();
-			}
-		});
-
-		cbGameplan.setCellFactory(new Callback<ListView<Gameplan>, ListCell<Gameplan>>() {
-			@Override
-			public ListCell<Gameplan> call(ListView<Gameplan> p) {
-				return new ListCell<Gameplan>() {
-
-					@Override
-					protected void updateItem(Gameplan item, boolean empty) {
-						super.updateItem(item, empty);
-
-						if (item == null || empty) {
-							setText(null);
-						} else {
-
-							if (item.getId() < 0) {
-								setText(item.getName() + "(" + persistentManager.getAllPlays().size() + ")");
-							} else {
-
-								setText(item.getName() + "(" + item.size() + "/" + item.MAX_PLAYS + ")");
-							}
-
-						}
-					}
-				};
-			}
-		});
+		loadGameplans();
 
 		tablePlays.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Spielzug>() {
 
@@ -1062,14 +1038,20 @@ public class MainFrameController {
 			}
 		});
 
-		loadGameplans();
-
 		ImageView imageView = new ImageView("logo.JPG");
 		imageView.setFitWidth(200);
 		imageView.setFitHeight(200);
 		tablePlays.setPlaceholder(imageView);
 
 		drawPlay(null);
+	}
+
+	private void loadGameplans() {
+		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
+		for (Gameplan gameplan : allGameplans) {
+			Tab tab = new TabGameplan(gameplan);
+			tabs.getTabs().add(tab);
+		}
 	}
 
 	@FXML
@@ -1080,24 +1062,14 @@ public class MainFrameController {
 		File selectedFile = fileChooser.showOpenDialog(root.getScene().getWindow());
 		if (selectedFile != null) {
 			persistentManager.setFile(selectedFile);
-			persistentManager.loadPlays();
+			boolean loadPlays = persistentManager.loadPlays();
+			if(loadPlays){
+				tablePlays.getItems().addAll(persistentManager.getAllPlays().values());
+				loadGameplans();
+			}
 		}
 	}
 
-	protected void loadGameplan() {
-		Gameplan selectedItem = cbGameplan.getSelectionModel().getSelectedItem();
-
-		if (selectedItem != null) {
-			loadGameplan(selectedItem);
-		} else {
-			tablePlays.getItems().clear();
-		}
-	}
-
-	@FXML
-	void loadGameplan(ActionEvent event) {
-		loadGameplan();
-	}
 
 	protected void loadGameplan(Gameplan plan) {
 		if (plan.getId() < 0) {
@@ -1110,12 +1082,7 @@ public class MainFrameController {
 			}
 		}
 	}
-
-	protected void loadGameplans() {
-		ObservableList<Gameplan> allGameplans = persistentManager.getAllGameplans();
-		cbGameplan.setItems(allGameplans);
-	}
-
+	
 	@FXML
 	void newPlan(ActionEvent event) {
 
@@ -1170,7 +1137,6 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Name: " + play.getName());
-			loadGameplans();
 		});
 	}
 
@@ -1238,13 +1204,17 @@ public class MainFrameController {
 
 		result.ifPresent(play -> {
 			System.out.println("Aufstellung=" + play.getAufstellung() + ", Block=" + play.getBlockSchema());
-			loadGameplan();
 		});
 	}
 
 	@FXML
 	void removePlan(ActionEvent event) {
-		Gameplan gameplan = cbGameplan.getSelectionModel().getSelectedItem();
+		Tab tab = tabs.getSelectionModel().getSelectedItem();
+		if(!(tab instanceof TabGameplan)){
+			
+		}
+		TabGameplan tabGameplan = (TabGameplan) tab;
+		Gameplan gameplan = tabGameplan.getGameplan();
 		if (gameplan.getId() < 0) {
 			Alert alert = new Alert(AlertType.INFORMATION);
 			alert.setTitle("Hinweis");
@@ -1277,15 +1247,20 @@ public class MainFrameController {
 		Optional<ButtonType> showAndWait = alert.showAndWait();
 		if (showAndWait.get() == ButtonType.OK) {
 			persistentManager.removeSpielzug(spielzug);
-			loadGameplan();
 		}
 	}
 
 	@FXML
 	void removePlayFromGameplan(ActionEvent event) {
-		Spielzug spielzug = tablePlays.getSelectionModel().getSelectedItem();
-		Gameplan gameplan = cbGameplan.getValue();
 
+		Tab tab = tabs.getSelectionModel().getSelectedItem();
+		if(!(tab instanceof TabGameplan)){
+			
+		}
+		TabGameplan tabGameplan = (TabGameplan) tab;
+		Gameplan gameplan = tabGameplan.getGameplan();
+		Spielzug spielzug = tabGameplan.getSpielzug();
+		
 		if (gameplan == null || spielzug == null || gameplan.getId() < 0) {
 			return;
 		}
@@ -1299,7 +1274,6 @@ public class MainFrameController {
 		Optional<ButtonType> showAndWait = alert.showAndWait();
 		if (showAndWait.get() == ButtonType.OK) {
 			gameplan.remove(spielzug);
-			loadGameplan();
 		}
 
 	}
@@ -1323,10 +1297,15 @@ public class MainFrameController {
 
 	@FXML
 	public void mixPlan(ActionEvent event) {
-		Gameplan value = cbGameplan.getValue();
+		Tab tab = tabs.getSelectionModel().getSelectedItem();
+		if(!(tab instanceof TabGameplan)){
+			
+		}
+		TabGameplan tabGameplan = (TabGameplan) tab;
+		Gameplan value = tabGameplan.getGameplan();
 		if (value != null && value.getId() >= 0) {
 			Collections.shuffle(value);
-			loadGameplan();
+			value.fireChange();
 		}
 	}
 

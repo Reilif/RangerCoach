@@ -49,10 +49,6 @@ public class FilePersistentManager implements PersistentManager {
 	 * Manager for files
 	 */
 	public FilePersistentManager() {
-		Gameplan gameplan = new Gameplan();
-		gameplan.setName("Alle Spielzüge");
-		gameplan.setId(-1);
-		gameplans.add(gameplan);
 	}
 
 	@Override
